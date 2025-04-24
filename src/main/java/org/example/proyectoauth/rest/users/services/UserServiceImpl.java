@@ -2,6 +2,7 @@ package org.example.proyectoauth.rest.users.services;
 
 import lombok.extern.slf4j.Slf4j;
 import org.example.proyectoauth.rest.users.dto.UserInfoResponseDto;
+import org.example.proyectoauth.rest.users.dto.UserProfileUpdateDto;
 import org.example.proyectoauth.rest.users.dto.UserRequestDto;
 import org.example.proyectoauth.rest.users.dto.UserResponseDto;
 import org.example.proyectoauth.rest.users.exceptions.UserNotFound;
@@ -16,6 +17,7 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -29,7 +31,7 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService{
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-
+    private final PasswordEncoder passwordEncoder;
     /**
      * Constructor de UserServiceImpl.
      *
@@ -37,9 +39,10 @@ public class UserServiceImpl implements UserService{
      * @param userMapper         Mapper para convertir entre DTOs y entidades de usuario.
      */
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper) {
+    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /**
@@ -131,6 +134,37 @@ public class UserServiceImpl implements UserService{
                 });
         return userMapper.toUserResponse(userRepository.save(userMapper.toUser(userfound,userRequestDto,id)));
     }
+    /**
+     * Actualiza el perfil de un usuario existente por su identificador único.
+     *
+     * @param id Identificador único del usuario a actualizar.
+     * @param dto Nuevos datos del perfil del usuario.
+     * @return UserResponseDto que contiene la información del usuario actualizado.
+     */
+    public UserResponseDto updateProfile(Long id, UserProfileUpdateDto dto) {
+        log.info("Actualizando perfil de usuario con ID: {}", id);
+
+        var user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFound("id " + id));
+
+        // Validar si el username o email ya están en uso por otro
+        userRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase(dto.getUsername(), dto.getEmail())
+                .ifPresent(existingUser -> {
+                    if (!existingUser.getId().equals(id)) {
+                        throw new UsernameOrEmailExists(existingUser.getUsername() + "-" + existingUser.getEmail());
+                    }
+                });
+
+        // Actualiza solo los campos permitidos
+        user.setName(dto.getName());
+        user.setUsername(dto.getUsername());
+        user.setEmail(dto.getEmail());
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+
+
+        return userMapper.toUserResponse(userRepository.save(user));
+    }
+
 
     /**
      * Elimina un usuario por su identificador único.

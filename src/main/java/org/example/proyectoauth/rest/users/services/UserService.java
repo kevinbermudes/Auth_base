@@ -1,6 +1,7 @@
 package org.example.proyectoauth.rest.users.services;
 
 import org.example.proyectoauth.rest.users.dto.UserInfoResponseDto;
+import org.example.proyectoauth.rest.users.dto.UserProfileUpdateDto;
 import org.example.proyectoauth.rest.users.dto.UserRequestDto;
 import org.example.proyectoauth.rest.users.dto.UserResponseDto;
 import org.example.proyectoauth.rest.users.model.User;
@@ -66,4 +67,12 @@ public interface UserService {
      * @param id ID del usuario a eliminar.
      */
     void deleteById(Long id);
+    /**
+     * Actualiza el perfil del usuario autenticado sin permitir modificar roles ni estado.
+     *
+     * @param id ID del usuario.
+     * @param dto DTO con los campos permitidos para editar su perfil.
+     * @return DTO con la información actualizada del usuario.
+     */
+    UserResponseDto updateProfile(Long id, UserProfileUpdateDto dto);
 }
