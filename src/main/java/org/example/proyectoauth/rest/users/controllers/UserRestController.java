@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.proyectoauth.config.security.SecurityUtils;
 import org.example.proyectoauth.pageresponse.PageResponse;
 import org.example.proyectoauth.rest.users.dto.UserInfoResponseDto;
+import org.example.proyectoauth.rest.users.dto.UserProfileUpdateDto;
 import org.example.proyectoauth.rest.users.dto.UserRequestDto;
 import org.example.proyectoauth.rest.users.dto.UserResponseDto;
 import org.example.proyectoauth.rest.users.model.User;
@@ -102,10 +103,11 @@ public class UserRestController {
     @PutMapping("/me/profile")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<UserResponseDto> meProfileUpdate(@AuthenticationPrincipal User user,
-                                                           @RequestBody UserRequestDto userRequestDto) {
+                                                           @RequestBody UserProfileUpdateDto userDto) {
         log.info("[USER: {}] actualizó su perfil", getCurrentUsername());
-        return ResponseEntity.ok(userService.update(user.getId(), userRequestDto));
+        return ResponseEntity.ok(userService.updateProfile(user.getId(), userDto));
     }
+
 
     @DeleteMapping("/me/profile")
     @PreAuthorize("hasRole('USER')")
